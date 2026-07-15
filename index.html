@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevForge · Encomende seu site</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0b0d10;
+      color: #eaeef2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100%;
+      background: #14181c;
+      border-right: 1px solid #2a3138;
+      padding: 2.5rem 1.5rem;
+      transition: left 0.3s ease;
+      z-index: 1000;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.7);
+      overflow-y: auto;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar .close-btn {
+      background: none;
+      border: none;
+      color: #b0c0cd;
+      font-size: 1.8rem;
+      cursor: pointer;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+
+    .sidebar .close-btn:hover {
+      color: #ffffff;
+    }
+
+    .sidebar nav ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .sidebar nav ul li a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 1.2rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .sidebar nav ul li a i {
+      width: 24px;
+      color: #7e9bb5;
+    }
+
+    .sidebar nav ul li a:hover {
+      background: #222b33;
+      color: #ffffff;
+    }
+
+    .sidebar nav ul li a.active {
+      background: #2a3a47;
+      color: #ffffff;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.active {
+      display: block;
+    }
+
+    .main-wrapper {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 4rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .hamburger {
+      background: none;
+      border: none;
+      color: #d0dce8;
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .hamburger:hover {
+      color: #ffffff;
+    }
+
+    .top-bar h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #b8d0e0, #8bb3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page {
+      display: none;
+      animation: fade 0.25s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fade {
+      0% { opacity: 0.3; transform: translateY(5px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.8rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: #151b21;
+      border: 1px solid #29323b;
+      border-radius: 24px;
+      padding: 1.8rem 1.5rem;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: #4b6a84;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    }
+
+    .card.selected {
+      border-color: #7aa9d4;
+      background: #1e2832;
+      box-shadow: 0 0 0 2px #3f6a8c;
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #eef4f9;
+    }
+
+    .card .price {
+      display: inline-block;
+      background: #212d38;
+      padding: 0.25rem 1rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #b0d0e8;
+      margin: 0.5rem 0 0.75rem;
+    }
+
+    .card ul {
+      list-style: none;
+      font-size: 0.9rem;
+      color: #b8c9d9;
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+
+    .card ul li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .card ul li i {
+      color: #5f8bb0;
+      font-size: 0.7rem;
+      width: 16px;
+    }
+
+    .desc-box {
+      margin: 2rem 0 1.8rem;
+    }
+
+    .desc-box label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #c8d8e5;
+    }
+
+    .desc-box textarea {
+      width: 100%;
+      background: #11171e;
+      border: 1px solid #2b3642;
+      border-radius: 18px;
+      padding: 1.2rem;
+      color: #eef4f9;
+      font-size: 1rem;
+      resize: vertical;
+      min-height: 140px;
+      transition: border 0.2s;
+    }
+
+    .desc-box textarea:focus {
+      outline: none;
+      border-color: #5b89b0;
+      box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.2);
+    }
+
+    .btn-final {
+      background: #2a4b66;
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      padding: 1rem 2.8rem;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 6px 14px rgba(0, 20, 40, 0.6);
+      margin-top: 0.5rem;
+    }
+
+    .btn-final:hover {
+      background: #3a6182;
+    }
+
+    .btn-final:active {
+      transform: scale(0.97);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      margin: 2rem 0 1rem;
+    }
+
+    .info-block {
+      background: #12181f;
+      border-radius: 28px;
+      padding: 1.8rem 2rem;
+      border: 1px solid #26303a;
+    }
+
+    .info-block h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #d4e2f0;
+    }
+
+    .info-block p, .info-block li {
+      color: #bccedc;
+      line-height: 1.7;
+    }
+
+    .info-block ul {
+      list-style: none;
+    }
+
+    .info-block ul li {
+      padding: 0.3rem 0;
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+
+    .info-block ul li i {
+      color: #618fb0;
+      width: 18px;
+    }
+
+    .badge-time {
+      background: #1d2a35;
+      padding: 0.2rem 1rem;
+      border-radius: 40px;
+      font-weight: 500;
+      color: #b0cee8;
+    }
+
+    @media (max-width: 700px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      .main-wrapper {
+        padding: 1rem 1rem 3rem;
+      }
+      .top-bar h1 {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <button class="close-btn" id="closeSidebar"><i class="fas fa-times"></i></button>
+  <nav>
+    <ul>
+      <li><a href="#" class="active" data-page="pedido"><i class="fas fa-cart-plus"></i> Pedido</a></li>
+      <li><a href="#" data-page="como-funciona"><i class="fas fa-cogs"></i> Como funciona</a></li>
+      <li><a href="#" data-page="valores"><i class="fas fa-tag"></i> Valores</a></li>
+      <li><a href="#" data-page="tempos"><i class="fas fa-clock"></i> Tempos estimados</a></li>
+    </ul>
+  </nav>
+</aside>
+
+<div class="main-wrapper">
+
+  <div class="top-bar">
+    <button class="hamburger" id="openSidebar"><i class="fas fa-bars"></i></button>
+    <h1>Pedidos • Encomenda</h1>
+  </div>
+
+  <div id="page-pedido" class="page active">
+    <h2 style="font-weight: 500; margin-bottom: 0.2rem; color: #c8dae9;"><i class="fas fa-code" style="margin-right: 10px;"></i>Escolha o plano</h2>
+    <p style="color: #8aa3bb; margin-bottom: 1.8rem;">Clique no plano desejado e descreva seu projeto</p>
+
+    <div class="cards-grid" id="planCards">
+      <div class="card" data-plan="iniciante" data-price="30-50">
+        <h3>Iniciante</h3>
+        <span class="price">R$ 30–50</span>
+        <ul>
+          <li><i class="fas fa-circle"></i> Design básico</li>
+          <li><i class="fas fa-circle"></i> 3 abas máx.</li>
+          <li><i class="fas fa-circle"></i> Opções limitadas</li>
+          <li><i class="fas fa-circle"></i> Defesa média</li>
+        </ul>
+      </div>
+      <div class="card" data-plan="intermediario" data-price="50-150">
+        <h3>Intermediário</h3>
+        <span class="price">R$ 50–150</span>
+        <ul>
+          <li><i class="fas fa-circle"></i> Design bonito/alta qualidade</li>
+          <li><i class="fas fa-circle"></i> 7 abas máx.</li>
+          <li><i class="fas fa-circle"></i> Mais opções</li>
+          <li><i class="fas fa-circle"></i> Defesa alta</li>
+        </ul>
+      </div>
+      <div class="card" data-plan="otimo" data-price="150-500">
+        <h3>Ótimo</h3>
+        <span class="price">R$ 150–500</span>
+        <ul>
+          <li><i class="fas fa-circle"></i> Design organizado e bonito</li>
+          <li><i class="fas fa-circle"></i> 10 abas máx.</li>
+          <li><i class="fas fa-circle"></i> Muitas opções</li>
+          <li><i class="fas fa-circle"></i> Defesa muito boa</li>
+        </ul>
+      </div>
+      <div class="card" data-plan="profissional" data-price="500-••••">
+        <h3>Profissional</h3>
+        <span class="price">R$ 500–••••</span>
+        <ul>
+          <li><i class="fas fa-circle"></i> Design perfeito! profissional</li>
+          <li><i class="fas fa-circle"></i> Abas ilimitadas</li>
+          <li><i class="fas fa-circle"></i> Qualidade extremamente boa</li>
+          <li><i class="fas fa-circle"></i> Defesa nível extremo</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="desc-box">
+      <label for="descricao"><i class="fas fa-pen" style="margin-right: 8px;"></i>Descrição do site (máx. 2500 caracteres)</label>
+      <textarea id="descricao" maxlength="2500" placeholder="Descreva como será o site: cores, funcionalidades, público, referências..."></textarea>
+      <div style="text-align: right; color: #728b9e; font-size: 0.85rem; margin-top: 4px;"><span id="charCount">0</span> / 2500</div>
+    </div>
+
+    <button class="btn-final" id="finalizarPedido"><i class="fab fa-whatsapp"></i> Finalizar pedido</button>
+  </div>
+
+  <div id="page-como-funciona" class="page">
+    <h2 style="font-weight: 500; margin-bottom: 1.5rem;"><i class="fas fa-cogs" style="margin-right: 12px;"></i>Como funciona</h2>
+    <div class="info-block">
+      <p style="font-size: 1.05rem;">1. Escolha o plano que melhor atende sua necessidade.<br>
+      2. Preencha a descrição com detalhes do seu projeto (até 2500 caracteres).<br>
+      3. Clique em <strong>“Finalizar pedido”</strong> — você será redirecionado ao WhatsApp com a mensagem pronta.<br>
+      4. Responderei com o orçamento exato, prazos e próximos passos.</p>
+      <p style="margin-top: 1rem; background: #1a2530; padding: 1rem; border-radius: 20px;"><i class="fas fa-shield-alt" style="margin-right: 10px; color: #6d9ec0;"></i> Todo o processo é seguro e transparente. Você acompanha cada etapa.</p>
+    </div>
+  </div>
+
+  <div id="page-valores" class="page">
+    <h2 style="font-weight: 500; margin-bottom: 1.5rem;"><i class="fas fa-tag" style="margin-right: 12px;"></i>Valores</h2>
+    <div class="info-grid">
+      <div class="info-block"><h2><i class="fas fa-seedling"></i> Iniciante</h2><p><strong>R$ 30 – 50</strong><br>Design básico, até 3 abas, opções limitadas, defesa média.</p></div>
+      <div class="info-block"><h2><i class="fas fa-chart-line"></i> Intermediário</h2><p><strong>R$ 50 – 150</strong><br>Design bonito/alta qualidade, até 7 abas, mais opções, defesa alta.</p></div>
+      <div class="info-block"><h2><i class="fas fa-star"></i> Ótimo</h2><p><strong>R$ 150 – 500</strong><br>Design organizado e bonito, até 10 abas, muitas opções, defesa muito boa.</p></div>
+      <div class="info-block"><h2><i class="fas fa-crown"></i> Profissional</h2><p><strong>R$ 500 – ••••</strong><br>Design perfeito! profissional, abas ilimitadas, qualidade extrema, defesa nível extremo.</p></div>
+    </div>
+  </div>
+
+  <div id="page-tempos" class="page">
+    <h2 style="font-weight: 500; margin-bottom: 1.5rem;"><i class="fas fa-clock" style="margin-right: 12px;"></i>Tempos estimados</h2>
+    <div class="info-grid">
+      <div class="info-block"><h2><i class="fas fa-hourglass-start"></i> Iniciante</h2><p><span class="badge-time">2–4 dias</span><br>Projetos simples, entrega rápida.</p></div>
+      <div class="info-block"><h2><i class="fas fa-hourglass-half"></i> Intermediário</h2><p><span class="badge-time">5–9 dias</span><br>Design refinado e mais funcionalidades.</p></div>
+      <div class="info-block"><h2><i class="fas fa-hourglass"></i> Ótimo</h2><p><span class="badge-time">10–16 dias</span><br>Projetos robustos com muitas opções.</p></div>
+      <div class="info-block"><h2><i class="fas fa-hourglass-end"></i> Profissional</h2><p><span class="badge-time">18–30 dias</span><br>Entrega premium, sob medida.</p></div>
+    </div>
+    <p style="margin-top: 2rem; color: #8da3b7; background: #131c25; padding: 1rem; border-radius: 30px;"><i class="fas fa-info-circle" style="margin-right: 10px;"></i>Os prazos podem variar conforme a complexidade da descrição.</p>
+  </div>
+
+</div>
+
+<script>
+  (function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const openBtn = document.getElementById('openSidebar');
+    const closeBtn = document.getElementById('closeSidebar');
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      overlay.classList.add('active');
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    }
+
+    openBtn.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+
+    const navLinks = document.querySelectorAll('.sidebar nav ul li a');
+    const pages = {
+      pedido: document.getElementById('page-pedido'),
+      'como-funciona': document.getElementById('page-como-funciona'),
+      valores: document.getElementById('page-valores'),
+      tempos: document.getElementById('page-tempos')
+    };
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const pageId = this.dataset.page;
+        if (!pageId || !pages[pageId]) return;
+
+        Object.keys(pages).forEach(key => {
+          pages[key].classList.remove('active');
+        });
+        pages[pageId].classList.add('active');
+
+        navLinks.forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+
+        closeSidebar();
+      });
+    });
+
+    const cards = document.querySelectorAll('.card');
+    let selectedPlan = null;
+
+    cards.forEach(card => {
+      card.addEventListener('click', function() {
+        cards.forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+        selectedPlan = this.dataset.plan;
+      });
+    });
+
+    const descTextarea = document.getElementById('descricao');
+    const charCount = document.getElementById('charCount');
+
+    descTextarea.addEventListener('input', function() {
+      charCount.textContent = this.value.length;
+    });
+
+    document.getElementById('finalizarPedido').addEventListener('click', function() {
+      const plan = document.querySelector('.card.selected');
+      if (!plan) {
+        alert('Selecione um plano antes de finalizar.');
+        return;
+      }
+      const planName = plan.dataset.plan;
+      const desc = descTextarea.value.trim() || '(sem descrição)';
+      if (desc.length > 2500) {
+        alert('Descrição excede 2500 caracteres.');
+        return;
+      }
+
+      const planLabel = plan.querySelector('h3')?.textContent || planName;
+      const msg = `Modelo: ${planLabel}%0ADescrição do pedido:%0A${desc}`;
+      const url = `https://wa.me/5527995303545?text=${msg}`;
+      window.open(url, '_blank');
+    });
+
+    if (cards.length) {
+      cards[0].classList.add('selected');
+      selectedPlan = cards[0].dataset.plan;
+    }
+  })();
+</script>
+</body>
+</html>
